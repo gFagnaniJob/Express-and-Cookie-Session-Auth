@@ -56,7 +56,7 @@ app.get('/personalPage', checkAuthentication, (req, res) => {
 });
 
 /* **** POST's ROUTES **** */
-app.post('/signin', async (req, res) => {
+app.post('/signin', checkNotAuthentication, async (req, res) => {
     //get req data
     const User = {
         email: req.body.email,
@@ -73,7 +73,7 @@ app.post('/signin', async (req, res) => {
     //render personal page
 });
 
-app.post('signup', async (req, res) => {
+app.post('signup', checkNotAuthentication, async (req, res) => {
     //get req data
     const NewUser = {
         email : req.body.email,
@@ -88,6 +88,11 @@ app.post('signup', async (req, res) => {
     //crypt password
     //save User on DB
     //initialize session
+});
+
+app.post('logout', checkAuthentication, (req, res) => {
+    //reset session
+    //redirect to home page
 });
 
 /* **** UTILITIES METHODS **** */
@@ -108,4 +113,3 @@ function checkAuthentication(req, res, next) {
         res.redirect('/error');
     }
 }
-
