@@ -134,7 +134,7 @@ app.post('/signup', checkNotAuthentication, async (req, res) => {
 app.post('/logout', checkAuthentication, (req, res) => {
     req.session = null;
     session = null;
-    res.redirect('/signin');
+    res.redirect('/');
 });
 
 /* **** UTILITIES METHODS **** */

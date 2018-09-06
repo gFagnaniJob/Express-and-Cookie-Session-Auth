@@ -19,12 +19,22 @@
     <h5>Email:
         <%=user.email%>
     </h5>
-    <h5>Password: <button id="btnPW" class="btn btn-danger" onclick="showPassword()">show pw</button></h5><h5 style="display:none" name="pw" id="pw"><%=user.password%></h5>
+    <h5>Password: <button id="btnPW" class="btn btn-danger" onclick="showPassword()">show pw</button></h5>
+    <h5 style="display:none"
+        name="pw" id="pw">
+        <%=user.password%>
+    </h5>
     </h5>
 
-    <form action="/logout" method="POST">
-        <button class="btn btn-primary">Logout</button>
-    </form>
+    <div class="row">
+        <form class="col-1" action="/logout" method="POST">
+            <button class="btn btn-primary">Logout</button>
+        </form>
+        <div class="col-1"></div>
+        <form class="col-1" action="/" method="GET">
+            <button class="btn btn-primary">Home</button>
+        </form>
+    </div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
