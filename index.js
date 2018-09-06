@@ -40,7 +40,6 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 /* **** START THE SERVER **** */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, function () {
-    session = null;
     console.log("Server listening on port " + PORT);
 });
 
@@ -55,6 +54,8 @@ app.get('/error', (req, res) => {
 
 app.get('/signin', checkNotAuthentication, (req, res) => {
     //render login page
+    console.log("session", req.session);
+    console.log("session.user", req.session.user);
     res.render('signin');
 });
 
@@ -64,7 +65,9 @@ app.get('/signup', checkNotAuthentication, (req, res) => {
 });
 
 app.get('/personalPage', checkAuthentication, (req, res) => {
-    res.render('personalPage');
+    res.render('personalPage', {
+        user : req.session.user
+    });
 });
 
 /* **** POST's ROUTES **** */
@@ -91,20 +94,12 @@ app.post('/signin', checkNotAuthentication, async (req, res) => {
             return res.redirect('/error');
         }
         //initialize session
-        req.session.user = USER;
+        req.session.user = User;
         session = req.session;
         //render personal page
         res.redirect('/personalPage');
     });
 });
-
-app.get('/logout', (req, res) => {
-    req.session = null;
-    session = null;
-    res.redirect('/signup');
-});
-
-
 
 app.post('/signup', checkNotAuthentication, async (req, res) => {
     //get req data
@@ -130,15 +125,16 @@ app.post('/signup', checkNotAuthentication, async (req, res) => {
         }
     })
     //initialize session
-    req.session.user = USER;
+    req.session.user = NewUser;
     session = req.session;
     //redirect to personal page
     res.redirect('/personalPage');
 });
 
-app.post('logout', checkAuthentication, (req, res) => {
-    //reset session
-    //redirect to home page
+app.post('/logout', checkAuthentication, (req, res) => {
+    req.session = null;
+    session = null;
+    res.redirect('/signin');
 });
 
 /* **** UTILITIES METHODS **** */
