@@ -2,8 +2,10 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const session = require('express-session');
+var session = require('express-session');
 const cookieSession = require('cookie-session');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 /* **** MODELS **** */
@@ -28,9 +30,17 @@ app.use(cookieSession(
 
 app.set('view engine', 'ejs');
 
+/* **** CONNECTION ON DB **** */
+const mongoDB = 'mongodb://127.0.0.1/NodeJsExpress';
+mongoose.connect(mongoDB, { useNewUrlParser: true });
+mongoose.Promise = global.Promise;
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+
 /* **** START THE SERVER **** */
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, function (req, res) {
+app.listen(PORT, function () {
+    session = null;
     console.log("Server listening on port " + PORT);
 });
 
@@ -45,10 +55,12 @@ app.get('/error', (req, res) => {
 
 app.get('/signin', checkNotAuthentication, (req, res) => {
     //render login page
+    res.render('signin');
 });
 
 app.get('/signup', checkNotAuthentication, (req, res) => {
     //render registration form page
+    res.render('signup');
 });
 
 app.get('/personalPage', checkAuthentication, (req, res) => {
@@ -63,31 +75,65 @@ app.post('/signin', checkNotAuthentication, async (req, res) => {
         password: req.body.password
     };
     //check if User exists
-    const exist = await UserController.checkIfUserExists(User);
-    if (!exist) {
+    const USER = await UserModel.findOne({email : User.email});
+    if (!USER) {
         jsonObject.errorMessage = "Email is not correct";
-        res.redirect('/error');
+        return res.redirect('/error');
     }
     //check if password is correct
-    //initialize session
-    //render personal page
+    bcrypt.compare(User.password, USER.password, function (err, result) {
+        if (err) {
+            jsonObject.errorMessage = "ERROR ON COMPARE PASSWORDS\n" + err.toString();
+            return res.redirect('/error');
+        }
+        if (!result) {
+            jsonObject.errorMessage = "Password is not correct";
+            return res.redirect('/error');
+        }
+        //initialize session
+        req.session.user = USER;
+        session = req.session;
+        //render personal page
+        res.redirect('/personalPage');
+    });
 });
 
-app.post('signup', checkNotAuthentication, async (req, res) => {
+app.get('/logout', (req, res) => {
+    req.session = null;
+    session = null;
+    res.redirect('/signup');
+});
+
+
+
+app.post('/signup', checkNotAuthentication, async (req, res) => {
     //get req data
     const NewUser = {
-        email : req.body.email,
-        password : req.body.password
+        email: req.body.email,
+        password: req.body.password
     }
     //check if User is already signed up
     const exist = await UserController.checkIfUserExists(NewUser);
     if (exist) {
         jsonObject.errorMessage = "Email already used";
-        res.redirect('/error');
+        return res.redirect('/error');
     }
-    //crypt password
     //save User on DB
+    const USER = new UserModel({
+        email: NewUser.email,
+        password: NewUser.password
+    });
+    USER.save(function (err) {
+        if (err) {
+            jsonObject.errorMessage = "ERROR ON SAVING USER\n" + err.toString();
+            return res.redirect('/error');
+        }
+    })
     //initialize session
+    req.session.user = USER;
+    session = req.session;
+    //redirect to personal page
+    res.redirect('/personalPage');
 });
 
 app.post('logout', checkAuthentication, (req, res) => {
